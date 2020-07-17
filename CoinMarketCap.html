@@ -43,28 +43,40 @@
       </div> 
     </div>
 
-    <div class="col-12 mt-3">
-       <div class="row" id="titles">
+    <div class="col-12 mt-3 container">
+      <div class="row " id="titles">
         <div class="col-1">Rank</div>
         <div class="col-2">Name</div>
         <div class="col-2">Market Cap</div>
         <div class="col-1">Price</div>
-        <div class="col-1">Volume (24h)</div>
+        <div class="col-2">Volume (24h)</div>
         <div class="col-2">Circulating Supply</div>
         <div class="col-1">Change(24h)</div>
-        <div class="col-2">Price (7d)</div>
-       </div>
+        <div class="col-1">Graph (7d)</div>
+      </div>
+
+      <!-- html coin info to be inserted-->
+
+    </div>
 
 
     <script>
       let curPage = 0;
-      let previousCap = 0;
-      let currentCap = 0;
+      let ttlCap = 0;
       var coins = 0;
       let coinPages = "https://api.coingecko.com/api/v3/coins/list"; // API to pull full listing of coins to determine page and coin totals
-      let coinDataURL = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&sparkline=true&price_change_percentage=24h0&page="; //add page number to parse full coin data
+      let coinDataURL = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&sparkline=true&price_change_percentage=24h0&page="; //add page number to parse full coin data
+      // pull page number from get params in URL
+      let urlParams = new URLSearchParams(window.location.search);
+      curPage = urlParams.get('p');
+      if (curPage == null){
+        curPage = 1;
+      }
+      console.log("Current Page => " + curPage);    
 
-
+      function formatMoney(number) {
+        return number.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+      }
 
 
       async function countPages () {       
@@ -93,6 +105,7 @@
       }
 
       function showSparkLine(){
+        return 0; // not yet
         let html = ""; 
         let priceDates = []; // array for date of price
         let priceData = []; //array for price
@@ -103,37 +116,61 @@
                 scales: { yAxes: [ { display: false } ], xAxes: [ { display: false } ] } }});
                 `;
 
-                document.body.innerHTML = html; 
+                $( ".sparkl" ).append ($(html));
       }
 
 //<!-- loop through 100 records at a time sorted by selected element-->
       async function showCoinInfo (curPage) {
-
         let html = "";
-        html += `<div class='row coins-row'></div>
-          <div class='col-1'>${coinRank}</div>
-          <div class='col-2'>${coinName}</div>
-          <div class='col-2'>${coinCap}</div>
-          <div class='col-1'>"${price} </div>
-          <div class='col-1'>${volume} </div>
-          <div class='col-1'>${supply} </div>
-          <div class='col-1'>${change}</div>
-        div class='col-1'>" + ${showSparkline(i)}</div>
-        `;
-        document.body.innerHTML = html;
+        let fetchURL = coinDataURL + p
+        let res3 = await fetch(fetchURL); // api call for page count
+        console.log(fetchURL);
+        console.log(res3.status);
+        let coinData = await res3.json(); // process json response for coin data
+        let coinRank = 0;
+        let coinName = "";
+
+        console.log(coinData);
+        console.log("Records on the page => " + coinData.length);    
+        for (i = 0; i < coinData.length; i++) {
+          
+          coinRank = coinData[i].market_cap_rank;
+          coinName = coinData[i].name;
+          coinCap = formatMoney(coinData[i].market_cap);
+          price =  formatMoney(coinData[i].current_price);
+          volume = coinData[i].total_volume;
+          supply = coinData[i].circulating_supply;
+          change = coinData[i].price_change_percentage_24h;
+
+          html +=  `<div class='row coins-row'>
+                    <div class='col-1'>${coinRank}</div>
+                    <div class='col-2'><img src='${coinData[i].image}' class='coin-logo' alt=''><span class='coin-name'>${coinName}</span></div>
+                    <div class='col-2'>${coinCap}</div>
+                    <div class='col-1'>${price} </div>
+                    <div class='col-2'>${volume} </div>
+                    <div class='col-2'>${supply} </div>
+                    <div class='col-1'>${change}</div>
+                    <div class='col-1 sparkl'> ${showSparkLine(i)} </div>
+                    </div>
+                  `;
+        }
+      
+      $( "#titles" ).after ($(html));
+
+        
       }
 
       $(document).ready(function () {
         let pageCount = countPages();
         $("#coinTtl").html(coins);
-        let ttlCap = pullMarketCap(pageCount);
+        ttlCap = pullMarketCap(pageCount);
         $("#marketCap").html(ttlCap);
-       
+        showCoinInfo (curPage);
       })
 
 </script>
 
-      </div>
+
 
       <div class="row">
         <div id="pagination" class="col-9">
@@ -202,32 +239,3 @@
 </body>
 
 </html>
-
-<!--{
-    "id": "bitcoin",
-    "symbol": "btc",
-    "name": "Bitcoin",
-    "image": "https://assets.coingecko.com/coins/images/1/large/bitcoin.png?1547033579",
-    "current_price": 9232.13,
-    "market_cap": 170233397580,
-    "market_cap_rank": 1,
-    "total_volume": 18571543326,
-    "high_24h": 9322.91,
-    "low_24h": 9213.88,
-    "price_change_24h": -55.51660354,
-    "price_change_percentage_24h": -0.59775,
-    "market_cap_change_24h": -1107983889.7349243,
-    "market_cap_change_percentage_24h": -0.64665,
-    "circulating_supply": 18432218,
-    "total_supply": 21000000,
-    "ath": 19665.39,
-    "ath_change_percentage": -53.0412,
-    "ath_date": "2017-12-16T00:00:00.000Z",
-    "atl": 67.81,
-    "atl_change_percentage": 13518.59675,
-    "atl_date": "2013-07-06T00:00:00.000Z",
-    "roi": null,
-    "last_updated": "2020-07-14T01:58:02.812Z",
-    "price_change_percentage_24h_in_currency": -0.5977467754207961
-  },
--->

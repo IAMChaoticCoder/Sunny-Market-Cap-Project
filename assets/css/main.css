@@ -9,35 +9,13 @@ html, body, h1, h2, h3, h4, h5, h6 {
 body {
     padding: 2em;
 }
-.card-pic{
-    width:10em;
-}
 
-@media screen and (max-width: 1680px) {
 
-    body, input, select, textarea {
-        font-size: 13pt;
-    }
 
-}
-
-@media screen and (max-width: 1280px) {
-
-    body, input, select, textarea {
-        font-size: 12pt;
-    }
-
-}
-
-@media screen and (max-width: 736px) {
-
-    body, input, select, textarea {
-        font-size: 11pt;
-    }
-}
 
 .coins-row div {
-    padding:2px;
+    /* padding:2px; */
+    overflow-wrap: ;
 }
 
 #sunny-img:hover{
@@ -60,5 +38,21 @@ body {
         100% { transform: translate(1px, -2px) rotate(-1deg); }
       }
 
+#titles div {
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
 
+.coin-logo {
+    width:16px;
+    height:16px;
+    margin-right:5px;
+
+}
+
+.coin-name {
+    text-transform:capitalize;
+    font-weight: bold;
 }
