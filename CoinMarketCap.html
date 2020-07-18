@@ -9,19 +9,20 @@
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"  integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"> </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"   integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"> </script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.js" ></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sparklines/2.1.2/jquery.sparkline.min.js" ></script>
     <link href="assets/css/main.css" rel="stylesheet"> 
 
 
 </head>
 <body>
   <!-- Matt (Chaotic Coder's) Coin Market Cap -->
-    
+  <div class="container" id="main">
     <div class="row">
-        <div class="col-md-12"><h3 ><img class="rounded-circle mr-2 border border-warning" data-toggle="modal" data-target="#sunnyModal"  id="sunny-img" width="40" src="assets/images/sunny/logo.jpg" >Sunny's Market Cap</h3></div>
-        <div class="col-md-12"><h1>Top 100 Cryptocurrencies by Market Capitalization</h1>  </div>
+        <div class="col-md-12"><h4 ><img class="rounded-circle mr-2 border border-warning" data-toggle="modal" data-target="#sunnyModal"  id="sunny-img" width="40" src="assets/images/sunny/logo.jpg" >Sunny's Market Cap</h4></div>
+        <div class="col-md-12"><h3 class='text-center'>Top 100 Cryptocurrencies by Market Capitalization</h3>  </div>
     </div>
 
     
@@ -30,7 +31,7 @@
         <div id="tab-navs" class="col-9">
         <ul class="nav nav-tabs">
             <li class="nav-item"><a class="nav-link active" href="#">Cryptocurrencies</a></li>
-            <li class="nav-item"><a class="nav-link" href="#">Exchanges</a></li>
+            <li class="nav-item"><a class="nav-link" href="exchanges.html">Exchanges</a></li>
         </ul>
       </div>
       <div id="pagination" class="col-3">
@@ -43,14 +44,14 @@
       </div> 
     </div>
 
-    <div class="col-12 mt-3 container">
+    <div class="col-12 mt-3 container ">
       <div class="row " id="titles">
         <div class="col-1">Rank</div>
         <div class="col-2">Name</div>
-        <div class="col-2">Market Cap</div>
-        <div class="col-1">Price</div>
-        <div class="col-2">Volume (24h)</div>
-        <div class="col-2">Circulating Supply</div>
+        <div class="col-2 text-right">Market Cap</div>
+        <div class="col-1 text-right">Price</div>
+        <div class="col-2 text-right">Volume (24h)</div>
+        <div class="col-2 text-right">Circulating Supply</div>
         <div class="col-1">Change(24h)</div>
         <div class="col-1">Graph (7d)</div>
       </div>
@@ -76,6 +77,12 @@
 
       function formatMoney(number) {
         return number.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+      }
+      function currencyFormat(num,pr) {
+        return '$' + num.toFixed(pr).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+      }
+      function formatNumber(num) {
+        return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
       }
 
 
@@ -104,20 +111,8 @@
  
       }
 
-      function showSparkLine(){
-        return 0; // not yet
-        let html = ""; 
-        let priceDates = []; // array for date of price
-        let priceData = []; //array for price
-        html += `<canvas id='spark${coinID}' width='100' height='50'></canvas>
-                const ctx = document.getElementById('spark${coinID}').getContext('2d');
-                const chart = new Chart(ctx, {type: 'line', data: {labels: [spark${priceDates}],datasets: [ {    data: [spark${priceData}]}] },
-                options: {responsive: false, legend: { display: false }, elements: {line: {borderColor: '#000', borderWidth: 1 }, point: { radius: 0 } },  tooltips: { enabled: false  },
-                scales: { yAxes: [ { display: false } ], xAxes: [ { display: false } ] } }});
-                `;
+ 
 
-                $( ".sparkl" ).append ($(html));
-      }
 
 //<!-- loop through 100 records at a time sorted by selected element-->
       async function showCoinInfo (curPage) {
@@ -129,30 +124,48 @@
         let coinData = await res3.json(); // process json response for coin data
         let coinRank = 0;
         let coinName = "";
-
+        let symbol = "";
+        let sparkhtml = ""; 
         console.log(coinData);
         console.log("Records on the page => " + coinData.length);    
         for (i = 0; i < coinData.length; i++) {
           
           coinRank = coinData[i].market_cap_rank;
           coinName = coinData[i].name;
-          coinCap = formatMoney(coinData[i].market_cap);
-          price =  formatMoney(coinData[i].current_price);
-          volume = coinData[i].total_volume;
-          supply = coinData[i].circulating_supply;
-          change = coinData[i].price_change_percentage_24h;
+          coinCap =currencyFormat (coinData[i].market_cap,0 );
+          price =  currencyFormat(coinData[i].current_price,2);
+          volume = currencyFormat(coinData[i].total_volume,0);
+          supply = formatNumber(Math.round(coinData[i].circulating_supply),0);
+          symbol = coinData[i].symbol;
+          change = parseFloat(coinData[i].price_change_percentage_24h).toFixed(2)+'%';
+          let changeColor = "text-success";
+          if (coinData[i].price_change_percentage_24h < 0 ){
+            changeColor = "text-danger";
+          }
+          
+        let priceDates = []; // array for date of price
+        let priceData = coinData[i].sparkline_in_7d.price; //array for price
 
-          html +=  `<div class='row coins-row'>
-                    <div class='col-1'>${coinRank}</div>
+        
+        sparkhtml += `<canvas id='sparkl${i}' width='100' height='50'></canvas>
+                const ctx = document.getElementById('sparkl${i}').getContext('2d');
+                const chart = new Chart(ctx, {type: 'line', data: {labels: [${priceDates}],datasets: [ {    data: [${priceData}]}] },
+                options: {responsive: false, legend: { display: false }, elements: {line: {borderColor: '#000', borderWidth: 1 }, point: { radius: 0 } },  tooltips: { enabled: false  },
+                scales: { yAxes: [ { display: false } ], xAxes: [ { display: false } ] } }}); `;
+        sparkhtml = "";
+
+        html +=  `<div class='row coins-row'>
+                    <div class='col-1 pl-3'>${coinRank}</div>
                     <div class='col-2'><img src='${coinData[i].image}' class='coin-logo' alt=''><span class='coin-name'>${coinName}</span></div>
-                    <div class='col-2'>${coinCap}</div>
-                    <div class='col-1'>${price} </div>
-                    <div class='col-2'>${volume} </div>
-                    <div class='col-2'>${supply} </div>
-                    <div class='col-1'>${change}</div>
-                    <div class='col-1 sparkl'> ${showSparkLine(i)} </div>
+                    <div class='col-2 text-right'>${coinCap}</div>
+                    <div class='col-1 text-right'>${price} </div>
+                    <div class='col-2 text-right'>${volume} </div>
+                    <div class='col-2 text-right text-uppercase'>${supply} ${symbol} </div>
+                    <div class='col-1 text-right ${changeColor}'>${change}</div>
+                    <div class='col-1 sparkl'> ${sparkhtml} </div>
                     </div>
                   `;
+
         }
       
       $( "#titles" ).after ($(html));
@@ -225,7 +238,7 @@
                   <span class="sr-only">Next</span>
                 </a>
               </div>
-              <div class="text-center ">Sunny is a 1-year old Cairn Terrier. She's my buddy who loves to plop down on my desk while I watch <a href="https://academy.ivanontech.com/live" target="_blank" >Good Morning Crypto.</a></div>
+              <div class="text-center p-3 ">Sunny is a 1-year old Cairn Terrier. She's my buddy who loves to plop down on my desk while I watch <a href="https://academy.ivanontech.com/live" target="_blank" >Good Morning Crypto.</a></div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Nice to Meet You</button>
@@ -234,7 +247,7 @@
         </div>
       </div>
 
-
+    </div> <!-- full container -->
 
 </body>
 
