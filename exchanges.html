@@ -1,0 +1,168 @@
+<html>
+<head>
+    <title>Matt's Coin Market Cap for Sunny</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="https://fonts.googleapis.com/css2?family=Lato&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"  integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"  integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"> </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"   integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"> </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.js" ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.js" ></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.css" rel="stylesheet">
+    <link href="assets/css/main.css" rel="stylesheet"> 
+
+
+</head>
+<body>
+  <!-- Matt (Chaotic Coder's) Coin Market Cap -->
+  <div class="container" id="main">
+    <div class="row">
+        <div class="col-md-12"><h4 ><img class="rounded-circle mr-2 border border-warning" data-toggle="modal" data-target="#sunnyModal"  id="sunny-img" width="40" src="assets/images/sunny/logo.jpg" >Sunny's Market Cap</h4></div>
+        <div class="col-md-12"><h3 class='text-center'>Crypto Exchange Listing</h3>  </div>
+    </div>
+
+    
+    <!-- nav section -->
+    <div class="row">
+        <div id="tab-navs" class="col-9">
+        <ul class="nav nav-tabs">
+            <li class="nav-item"><a class="nav-link " href="coinmarketcap.html">Cryptocurrencies</a></li>
+            <li class="nav-item"><a class="nav-link active" href="#">Exchanges</a></li>
+        </ul>
+    </div>
+
+
+    <div class="col-12 mt-3 container ">
+        <div class="row " id="titles">
+            <div class="col-1">Rank</div>
+            <div class="col-2">Name</div>
+            <div class="col-1">Trust Score</div>
+            <div class="col-2 text-right">Volume (24h)</div>
+            <div class="col-2 text-right">Volume (Normalized)</div>        
+            
+            <div class="col-3 text-right">Country</div>
+            <div class="col-1">Launched</div>
+        </div>
+    <!-- html coin info to be inserted-->
+    </div>
+
+    <script>
+        var BTCUSD = 0;
+        function formatMoney(number) {
+        return number.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+        }
+        function currencyFormat(num,pr) {
+        return '$' + num.toFixed(pr).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+        }
+        function formatNumber(num) {
+        return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+        }
+
+        async function pullBTCPrice (){
+                let resBTC = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"); // api call for exchange listings
+                let BTCPrice = await resBTC.json(); // process json response for exchanges
+                console.log(BTCPrice);
+          
+                    BTCUSD = BTCPrice.bitcoin.usd;
+                    console.log(BTCUSD);
+          
+        }
+
+//<!-- loop through 100 records at a time sorted by selected element-->
+      async function showExchanges () {
+        let resExchange = await fetch("https://api.coingecko.com/api/v3/exchanges"); // api call for exchange listings
+        let exData = await resExchange.json(); // process json response for exchanges
+        let html = "";
+        let yearEst = " - ";
+        let country = " - ";
+
+ 
+        console.log(exData);
+        console.log("Records on the page => " + exData.length);    
+        for (i = 0; i < exData.length; i++) {          
+            if (exData[i].year_established != null){ yearEst = exData[i].year_established};
+            if (exData[i].country != null){ country = exData[i].country};
+
+            html +=  `<div class='row coins-row'>
+                        <div class='col-1 text-center'>${exData[i].trust_score_rank} </div>
+                        <div class='col-2'><a href='${exData[i].url}' target='_blank'><img src='${exData[i].image}' class='coin-logo' alt='${exData[i].name}><span class='coin-name'>${exData[i].name}</span></a></div>
+                        <div class='col-1 text-center'>${exData[i].trust_score} </div>
+                        <div class='col-2 text-right'>${currencyFormat((BTCUSD * exData[i].trade_volume_24h_btc),0)}</div>
+                        <div class='col-2 text-right'>${currencyFormat((BTCUSD * exData[i].trade_volume_24h_btc_normalized),0)}</div>
+                        <div class='col-3 text-right'>${country}</div>
+                        <div class='col-1 text-center'>${yearEst}</div>
+                        </div>
+                    `;
+
+        }
+      
+      $( "#titles" ).after ($(html));
+
+        
+      }
+
+      $(document).ready(function () {
+        pullBTCPrice();
+        showExchanges ();
+
+
+      })
+
+</script>
+
+
+
+      </div>
+
+        
+      </div>
+
+      <!--Sunny  Modal -->
+      <div class="modal fade" id="sunnyModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalTitle">Who is Sunny?</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div id="cControls" class="carousel slide" data-ride="carousel">
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <img class="d-block w-100" src="/SunnyCoin-Market-Cap/assets/images/sunny/iot1.jpg" alt="First slide">
+                  </div>
+                  <div class="carousel-item">
+                    <img class="d-block w-100" src="/SunnyCoin-Market-Cap/assets/images/sunny/iot2.jpg" alt="Second slide">
+                  </div>
+                  <div class="carousel-item">
+                    <img class="d-block w-100" src="/SunnyCoin-Market-Cap/assets/images/sunny/IMG_8402.jpg" alt="Third slide">
+                  </div>
+                </div>
+                <a class="carousel-control-prev" href="#cControls" role="button" data-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#cControls" role="button" data-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="sr-only">Next</span>
+                </a>
+              </div>
+              <div class="text-center p-3 ">Sunny is a 1-year old Cairn Terrier. She's my buddy who loves to plop down on my desk while I watch <a href="https://academy.ivanontech.com/live" target="_blank" >Good Morning Crypto.</a></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Nice to Meet You</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- full container -->
+
+</body>
+
+</html>
