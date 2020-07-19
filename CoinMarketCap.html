@@ -13,6 +13,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.js" ></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sparklines/2.1.2/jquery.sparkline.min.js" ></script>
+
+    <script src="assets/js/formats.js" ></script>
     <link href="assets/css/main.css" rel="stylesheet"> 
 
 
@@ -28,17 +30,18 @@
     
     <!-- nav section -->
     <div class="row">
-        <div id="tab-navs" class="col-9">
+        <div id="tab-navs" class="col-8">
         <ul class="nav nav-tabs">
             <li class="nav-item"><a class="nav-link active" href="#">Cryptocurrencies</a></li>
             <li class="nav-item"><a class="nav-link" href="exchanges.html">Exchanges</a></li>
         </ul>
       </div>
-      <div id="pagination" class="col-3">
+      <div id="pagination" class="col-4">
         <nav >
           <ul class="pagination">
-            <li class="page-item"><a class="page-link" href="#">Previous</a></li>
-            <li class="page-item"><a class="page-link" href="#">Next</a></li>
+            <li class="page-item "><a class="page-link " href="CoinMarketCap.html?p=1">Top 100</a></li>
+            <li class="page-item "><a class="page-link prevPg" href="#">Previous</a></li>
+            <li class="page-item "><a class="page-link nextPg" href="#">Next</a></li>
           </ul>
         </nav>
       </div> 
@@ -52,7 +55,7 @@
         <div class="col-1 text-right">Price</div>
         <div class="col-2 text-right">Volume (24h)</div>
         <div class="col-2 text-right">Circulating Supply</div>
-        <div class="col-1">Change(24h)</div>
+        <div class="col-1 text-center">Change(24h)</div>
         <div class="col-1">Graph (7d)</div>
       </div>
 
@@ -63,51 +66,44 @@
 
     <script>
       let curPage = 0;
-      let ttlCap = 0;
+   //   let ttlCap = 0;
       var coins = 0;
       let coinPages = "https://api.coingecko.com/api/v3/coins/list"; // API to pull full listing of coins to determine page and coin totals
       let coinDataURL = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&sparkline=true&price_change_percentage=24h0&page="; //add page number to parse full coin data
       // pull page number from get params in URL
       let urlParams = new URLSearchParams(window.location.search);
-      curPage = urlParams.get('p');
-      if (curPage == null){
+      curPage = Number(urlParams.get('p'));
+      console.log("Current Page => " + curPage);    
+      if (curPage == null || curPage == ""){
         curPage = 1;
       }
-      console.log("Current Page => " + curPage);    
-
-      function formatMoney(number) {
-        return number.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-      }
-      function currencyFormat(num,pr) {
-        return '$' + num.toFixed(pr).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
-      }
-      function formatNumber(num) {
-        return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
-      }
-
 
       async function countPages () {       
         let response1 = await fetch(coinPages); // api call for page count
         let pageData = await response1.json(); // process json response for page count
         coins = pageData.length;
-        console.log("Total pages => " + Math.round(pageData.length / 100));
+        console.log("Total pages (pagecount) => " + Math.round(pageData.length / 100));
         console.log("Total coins/tokens => " + coins);    
-        $("#coinTtl").html(coins);        
-        return Math.round(pageData.length / 100);        
-
+        $("#coinTtl").html(coins);    
+        pageCount = Math.round(pageData.length / 100);   
+        return pageCount;
       }
  
 
       async function pullMarketCap(pageCount){
-        for (p = 1; p <= pageCount; p++) {
-          let res2 = await fetch(coinDataURL + p); // api call for page count
+        let ttlCap = 0;
+        pgTTL = await countPages ();
+        for (let p = 1; p <= pgTTL; p++) {
+          let res2 = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&sparkline=false&page=" + p); // api call for page count
           let coinData = await res2.json(); // process json response for coin data
-          console.log(coinData);
-          console.log(p);
-          for (i = 0; i < coinData.length; i++) {
-            ttlCap += coinData[i].marketcap;
+          for (let i = 0; i < coinData.length; i++) {
+            if (coinData[i].market_cap != null && coinData[i].market_cap != ""){
+              ttlCap += Number(coinData[i].market_cap);
+
+            }
           }
-        }
+          $("#marketCap").html(currencyFormat(ttlCap,0));
+        } // loop all pages
  
       }
 
@@ -117,7 +113,7 @@
 //<!-- loop through 100 records at a time sorted by selected element-->
       async function showCoinInfo (curPage) {
         let html = "";
-        let fetchURL = coinDataURL + p
+        let fetchURL = coinDataURL + curPage
         let res3 = await fetch(fetchURL); // api call for page count
         console.log(fetchURL);
         console.log(res3.status);
@@ -126,18 +122,39 @@
         let coinName = "";
         let symbol = "";
         let sparkhtml = ""; 
+
+
+
         console.log(coinData);
         console.log("Records on the page => " + coinData.length);    
         for (i = 0; i < coinData.length; i++) {
           
           coinRank = coinData[i].market_cap_rank;
           coinName = coinData[i].name;
-          coinCap =currencyFormat (coinData[i].market_cap,0 );
-          price =  currencyFormat(coinData[i].current_price,2);
-          volume = currencyFormat(coinData[i].total_volume,0);
-          supply = formatNumber(Math.round(coinData[i].circulating_supply),0);
           symbol = coinData[i].symbol;
-          change = parseFloat(coinData[i].price_change_percentage_24h).toFixed(2)+'%';
+        // set value defaults for crap coins with no data
+          let coinCap = " - ";
+          let price = " - ";
+          let volume = " - ";
+          let supply = " - ";
+          let change= " - ";
+
+
+          if (coinData[i].market_cap != null){
+            coinCap = currencyFormat (coinData[i].market_cap,0 );
+          }
+          if (coinData[i].current_price != null){
+            price =  currencyFormat(coinData[i].current_price,2);
+          }
+          if (coinData[i].total_volume != null){
+            volume = currencyFormat(coinData[i].total_volume,0);
+          }
+          if (coinData[i].circulating_supply != null){
+            supply = formatNumber(Math.round(coinData[i].circulating_supply),0);
+          }
+          if (coinData[i].price_change_percentage_24h != null){
+              change =  parseFloat(coinData[i].price_change_percentage_24h).toFixed(2)+'%';
+          }
           let changeColor = "text-success";
           if (coinData[i].price_change_percentage_24h < 0 ){
             changeColor = "text-danger";
@@ -161,7 +178,7 @@
                     <div class='col-1 text-right'>${price} </div>
                     <div class='col-2 text-right'>${volume} </div>
                     <div class='col-2 text-right text-uppercase'>${supply} ${symbol} </div>
-                    <div class='col-1 text-right ${changeColor}'>${change}</div>
+                    <div class='col-1 text-center ${changeColor}'>${change}</div>
                     <div class='col-1 sparkl'> ${sparkhtml} </div>
                     </div>
                   `;
@@ -170,41 +187,52 @@
       
       $( "#titles" ).after ($(html));
 
-        
       }
 
       $(document).ready(function () {
         let pageCount = countPages();
         $("#coinTtl").html(coins);
-        ttlCap = pullMarketCap(pageCount);
-        $("#marketCap").html(ttlCap);
+        pullMarketCap(pageCount);
         showCoinInfo (curPage);
+
+
+        let prevPg = curPage - 1;
+        let nextPg = curPage + 1;
+        if (pageCount >= nextPg + 1){
+          $(".nextPg").hide();
+          nextPg = curPage - 1;
+        }
+        $(".prevPg").attr("href","coinmarketcap.html?p=" + prevPg);
+        $(".nextPg").attr("href","coinmarketcap.html?p=" + nextPg);
       })
 
 </script>
 
 
 
-      <div class="row">
-        <div id="pagination" class="col-9">
+      <div class="row mt-4 ">
+        <div id="pagination" class="col-8">
         </div>
-        <div id="pagination" class="col-3">
+        <div id="pagination" class="col-4">
           <nav>
             <ul class="pagination">
-              <li class="page-item"><a class="page-link" href="coinmarketcap&p=">Previous</a></li>
-              <li class="page-item"><a class="page-link" href="#">Next</a></li>
+              <li class="page-item "><a class="page-link " href="CoinMarketCap.html?p=1">Top 100</a></li>
+              <li class="page-item " ><a class="page-link prevPg" href="">Previous</a></li>
+              <li class="page-item " ><a class="page-link nextPg" href="">Next</a></li>
             </ul>
           </nav>
         </div>
       </div>
 
+
+
+      <div class="row">
+        <div class="col-md-12 d-flex justify-content-center">
+          <h4>Total Market Cap: <span id="marketCap"></span> <i>(for <span id="coinTtl"></span> coins/tokens)</i></h4>
+        </div>
       </div>
 
-        <div class="row">
-          <div class="col-md-12 d-flex justify-content-center">
-            <h3>Total Market Cap: <span id="marketCap"></span> <i>(for <span id="coinTtl"></span> coins/tokens)</i></h3>
-          </div>
-      </div>
+  </div> <!-- main section closing-->
 
       <!--Sunny  Modal -->
       <div class="modal fade" id="sunnyModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
